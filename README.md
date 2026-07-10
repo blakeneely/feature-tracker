@@ -7,6 +7,14 @@ create tickets and move them as they work, by editing the same JSON files or
 calling the same API. No cloud, no database, no accounts — everything lives
 in this folder.
 
+## What it looks like
+
+![The board: features in the left sidebar, one feature's tickets in New / Active / Resolved columns](docs/screenshots/feature-tracker-dashboard.png)
+
+| Creating a ticket | Ticket detail view |
+| --- | --- |
+| ![The New Ticket dialog: title, free-form notes, and a starting status](docs/screenshots/new-ticket.png) | ![The ticket dialog: view-first, with status chip, timestamps, and Edit/Delete](docs/screenshots/edit-ticket.png) |
+
 ## First-time setup
 
 New machine? See [`SETUP.md`](SETUP.md) — one script (`npm run setup`)
