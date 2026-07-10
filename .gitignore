@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Personal/local — never committed. data/ is your boards (self-seeds on first
+# run); tracker.config.json is this machine's settings, written by setup.ps1.
+data/
+tracker.config.json
+.claude/settings.local.json

@@ -1,0 +1,1109 @@
+/* Clean-cut black / white / cyan, accent matched to blakeneely.netlify.app.
+   Dark: solid black page, near-neutral black surfaces (no gradients), pure
+   white reserved for headings and column counts, #09b2e4 as the only color
+   on the page. Light: the same structure on soft cool grays — never stark
+   white in large areas — with the accent darkened for contrast. Depth comes
+   from a 1px edge light on cards — machined, not glass; the ticket dialog is
+   the one glass moment (blurred backdrop). Red is spent only on destructive
+   actions. Structure keeps the work-order character (condensed uppercase
+   headers, double rules, mono ids).
+
+   Theming: every token is a light-dark() pair resolved by color-scheme.
+   Default follows the system; the sidebar toggle sets data-theme on <html>
+   (persisted in localStorage) to force one side. */
+
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#e7ebef, #000000); /* page and sidebar */
+  --panel: light-dark(#f0f3f6, #0b0f13); /* column panels */
+  --card: light-dark(#fafbfc, #12181e); /* ticket cards */
+  --text: light-dark(#1c2530, #e8eef2); /* body text */
+  --bright: light-dark(#0a1017, #ffffff); /* headings */
+  --muted: light-dark(#5d6c79, #8a97a3); /* secondary text */
+  --line: light-dark(#d2d9df, #1e262e); /* hairlines */
+  --edge: light-dark(#a9b6c1, #303c47); /* stronger rules and borders */
+  --edge-light: light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.07)); /* card top edge */
+  --accent: light-dark(#04789e, #09b2e4); /* primary actions, column counts, focus */
+  --accent-strong: light-dark(#046585, #45c8ee); /* hover: brighter in dark, deeper in light */
+  --on-accent: light-dark(#f5fafd, #00141b); /* text on accent surfaces */
+  --danger: light-dark(#c14434, #e06c5f); /* destructive only */
+  --shadow-1: light-dark(rgb(23 37 51 / 0.1), rgb(0 0 0 / 0.35)); /* resting cards */
+  --shadow-2: light-dark(rgb(23 37 51 / 0.22), rgb(0 0 0 / 0.55)); /* lifted: drags, popovers, dialog */
+  --glass: light-dark(rgb(248 250 252 / 0.85), rgb(11 15 19 / 0.82)); /* dialog over blurred board */
+  --backdrop: light-dark(rgb(40 54 66 / 0.35), rgb(0 0 0 / 0.55));
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body), system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Subtle focus: fields brighten their own border (no ring, no offset);
+   keyboard-tabbed controls get a hairline outline so keyboard drag stays
+   usable. Nothing thick, nothing that juts outside the element. */
+:focus-visible {
+  outline: 1px solid var(--edge);
+  outline-offset: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- workspace & feature sidebar ----------
+
+   The sidebar is the job rack: every feature is one board, the active one
+   carries the accent bar. Its right edge repeats the masthead's double rule
+   vertically, tying the two panels into one piece of joinery. */
+
+.workspace {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width, 15rem); /* set by Workspace; drag the border to change it */
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--bg);
+  border-right: 4px double var(--edge);
+  padding: 1.4rem 0.9rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-title h1 {
+  margin: 0;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.sidebar-title .masthead-badge {
+  display: inline-block;
+  margin-top: 0.4rem;
+}
+
+.sidebar-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px double var(--edge);
+}
+
+.sidebar-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Quiet filter affordance: a bare magnifier that only earns color on hover,
+   staying accent-lit while a filter is active. */
+.sidebar-search-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0.2rem;
+  line-height: 1;
+}
+
+.sidebar-search-toggle:hover {
+  color: var(--text);
+}
+
+.sidebar-search-toggle.active {
+  color: var(--accent);
+}
+
+.sidebar-new {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.6rem;
+}
+
+.sidebar-new:hover {
+  background: var(--accent-strong);
+}
+
+.feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  border-left: 3px solid transparent;
+}
+
+.feature-item:hover {
+  background: rgb(9 178 228 / 0.07);
+}
+
+.feature-item.feature-active {
+  border-left-color: var(--accent);
+  background: var(--card);
+  /* The page's one luminous moment: the active board's bar casts a faint
+     cyan glow inward. */
+  box-shadow: inset 10px 0 16px -12px light-dark(rgb(4 120 158 / 0.4), rgb(9 178 228 / 0.55));
+}
+
+.feature-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  padding: 0.45rem 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feature-active .feature-name {
+  font-weight: 600;
+}
+
+/* Row actions surface on hover or keyboard focus, like ticket actions. */
+.feature-actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  padding-right: 0.3rem;
+}
+
+.feature-item:hover .feature-actions,
+.feature-item:focus-within .feature-actions {
+  opacity: 1;
+}
+
+.feature-actions button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.15rem 0.3rem;
+}
+
+.feature-actions button:hover {
+  color: var(--text);
+}
+
+.feature-actions button.danger {
+  font-size: 1rem;
+}
+
+.feature-actions button.danger:hover {
+  color: var(--danger);
+}
+
+.feature-input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 0.35rem 0.5rem;
+}
+
+.sidebar-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Theme switcher: cycles Auto → Dark → Light. As quiet as the Quit button —
+   a preference, not a call to action. */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--edge);
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.6rem;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* Invisible 9px grab strip overlaying the sidebar's double-rule border (the
+   negative margin pulls it back over the border, so grabbing "the border" is
+   what actually works). Sticky like the sidebar so it spans the viewport. */
+.sidebar-resizer {
+  flex: none;
+  width: 9px;
+  margin-left: -9px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 10;
+  cursor: col-resize;
+  touch-action: none; /* pointer-drag resizing, not scrolling */
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer.resizing,
+.sidebar-resizer:focus-visible {
+  background: rgb(9 178 228 / 0.35);
+}
+
+/* A row mid-drag lifts above its neighbours, like a dragging ticket card. */
+.feature-item.feature-dragging {
+  background: var(--card);
+  box-shadow: 0 8px 20px var(--shadow-2);
+  z-index: 5;
+}
+
+.workspace-main {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.board-welcome h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bright);
+}
+
+.board-welcome p {
+  margin: 0;
+  max-width: 34rem;
+}
+
+@media (max-width: 760px) {
+  .workspace {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: auto;
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 4px double var(--edge);
+  }
+
+  .sidebar-resizer {
+    display: none; /* stacked layout — no vertical border to drag */
+  }
+
+  .workspace-main {
+    height: auto;
+  }
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  max-width: 1060px;
+  margin-inline: auto;
+  padding: 1.5rem 1rem 0.75rem;
+  border-bottom: 4px double var(--edge);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+/* The title is the flexible part of the masthead row: it shrinks and
+   ellipsizes so a long feature name can't push the controls onto a second
+   line — wrapping is reserved for genuinely narrow windows. */
+.masthead-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 8rem;
+}
+
+.masthead-title h1 {
+  margin: 0;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--bright);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.masthead-badge {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 0.05rem 0.4rem;
+  white-space: nowrap;
+}
+
+.masthead-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.control-label {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+.control input,
+.control select {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 0;
+  padding: 0.3rem 0.5rem;
+  /* Fixed height so input, select, and the conversation chip (also 2rem)
+     line up in the controls row — their natural heights all differ. */
+  height: 2rem;
+}
+
+.control-search input {
+  width: 15rem;
+  max-width: 60vw;
+}
+
+.control select:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.filter-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.3rem;
+}
+
+.filter-count {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-clear {
+  background: none;
+  border: 1px solid var(--edge);
+  color: var(--text);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+}
+
+/* Link back to the Claude Code conversation behind a board (masthead) or
+   ticket (dialog view). Clicking copies the resume command. The sizer and
+   label stack in one grid cell: the hidden sizer fixes the width to the
+   longest label, the visible label sits left-anchored on top — flipping to
+   the shorter "copied ✓" never resizes or shifts the button. */
+.conversation-link {
+  display: inline-grid;
+  align-items: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 0 0.5rem;
+  height: 2rem;
+  white-space: nowrap;
+}
+
+.conversation-link-sizer,
+.conversation-link-label {
+  grid-area: 1 / 1;
+  text-align: left;
+}
+
+.conversation-link-sizer {
+  visibility: hidden;
+}
+
+.conversation-link:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.conversation-link.copied {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Stops the local server — destructive, so it earns red, but only on hover
+   so it sits quietly at the bottom of the sidebar the rest of the time. */
+.quit-button {
+  background: none;
+  border: 1px solid var(--edge);
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.6rem;
+}
+
+.quit-button:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* ---------- board & columns ---------- */
+
+.board-status {
+  max-width: 1060px;
+  margin-inline: auto;
+  padding: 2rem 1rem;
+  font-family: var(--font-mono), monospace;
+  color: var(--muted);
+}
+
+.board-stopped {
+  text-align: center;
+  padding-top: 22vh;
+}
+
+.board-stopped h1 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bright);
+}
+
+.board-stopped p {
+  margin: 0.25rem 0;
+}
+
+.board-error {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: light-dark(#f7ddd8, #3a2320);
+  color: light-dark(#a02f1f, #f0938a);
+  border-bottom: 1px solid var(--danger);
+  font-size: 0.875rem;
+}
+
+.board {
+  max-width: 1060px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.25rem 1rem 3rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 0.75rem;
+  min-height: 12rem;
+}
+
+.column-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.column-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px double var(--edge);
+}
+
+.column-title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--bright);
+}
+
+.column-count {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.add-ticket {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.6rem;
+}
+
+.add-ticket:hover {
+  background: var(--accent-strong);
+}
+
+.column-empty {
+  margin: 0;
+  padding: 0.25rem 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ---------- ticket cards ---------- */
+
+.ticket-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* minmax(0, …): an implicit auto track would grow to a card's max-content
+     width (a nowrap description = the whole line), blowing the column out
+     and defeating the truncation below. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.625rem;
+}
+
+.ticket-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top-color: var(--edge-light); /* edge light: machined depth, not glass */
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 1px 2px var(--shadow-1);
+  cursor: grab;
+  touch-action: none; /* PointerSensor needs this so touch drags don't scroll */
+}
+
+.ticket-card.dragging {
+  box-shadow: 0 12px 28px var(--shadow-2);
+  z-index: 5;
+  cursor: grabbing;
+}
+
+/* First card row: title top-left, number top-right. The title gets the
+   flexible column, so a long one wraps within it and never runs under the
+   id; baseline alignment pins the number to the title's first line. */
+.ticket-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.ticket-number {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+.ticket-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0; /* the clamp/ellipsis inside needs a shrinkable box */
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ticket-tags {
+  margin-bottom: 0.45rem;
+}
+
+.ticket-open {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  /* Long titles wrap to two lines then clip — the dialog shows the rest. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.ticket-open:hover {
+  color: var(--accent-strong);
+}
+
+/* On the board, notes are a single truncated line — the dialog is where you read. */
+.ticket-description {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- tag pills & inline editor ---------- */
+
+.tag-editor {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text);
+  background: rgb(9 178 228 / 0.12);
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  padding: 0.05rem 0.15rem 0.05rem 0.4rem;
+  max-width: 100%;
+  min-width: 0; /* let the pill shrink so the label inside can ellipsize */
+}
+
+.tag-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dialog-tags-field {
+  margin-bottom: 0.8rem;
+}
+
+.dialog-field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+.tag-remove:hover {
+  color: var(--danger);
+}
+
+/* Reserved footprint for the add-tag affordance: always the size of the open
+   input, so '+' → input swaps in place without moving anything around it. */
+.tag-add-slot {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: 9rem;
+  height: 1.5rem;
+}
+
+.tag-add {
+  background: none;
+  border: 1px dashed var(--edge);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 0 0.45rem;
+  height: 100%;
+}
+
+.tag-add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.tag-input {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 0.35rem;
+  width: 100%;
+  height: 100%;
+}
+
+.tag-options {
+  position: absolute;
+  top: calc(100% + 0.2rem);
+  left: 0;
+  margin: 0;
+  padding: 0.15rem;
+  list-style: none;
+  min-width: 100%;
+  max-height: 10rem;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  box-shadow: 0 10px 24px var(--shadow-2);
+  z-index: 20;
+}
+
+.tag-options button {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.75rem;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+}
+
+.tag-options button:hover {
+  background: rgb(9 178 228 / 0.15);
+}
+
+.ticket-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ticket-date {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.ticket-actions button {
+  background: none;
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0.1rem 0.35rem;
+}
+
+.ticket-actions button:hover {
+  color: var(--text);
+}
+
+.ticket-actions button.danger {
+  color: var(--danger);
+}
+
+/* ---------- dialog ---------- */
+
+.ticket-dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--edge);
+  border-top-color: light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.12));
+  padding: 1.5rem 1.75rem;
+  width: min(56rem, 94vw);
+  box-shadow: 0 16px 40px var(--shadow-2);
+}
+
+/* The one glass moment: the dialog floats over a blurred, dimmed board —
+   there is real content behind it, so the blur reads as depth. Working
+   surfaces stay opaque; opaque --panel above is the no-blur fallback. */
+@supports (backdrop-filter: blur(1px)) {
+  .ticket-dialog {
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+  }
+
+  .ticket-dialog::backdrop {
+    backdrop-filter: blur(6px);
+  }
+}
+
+/* ---------- dialog: view mode ---------- */
+
+.dialog-view-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.dialog-status {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0.05rem 0.4rem;
+}
+
+.dialog-view-title {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--bright);
+  padding-bottom: 0.5rem;
+  border-bottom: 3px double var(--edge);
+}
+
+.dialog-view-description {
+  min-height: 40vh;
+  max-height: 55vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  padding: 0.25rem 0.1rem;
+}
+
+.dialog-view-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.dialog-view-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.dialog-view-dates {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dialog-actions-spacer {
+  margin-right: auto;
+}
+
+.dialog-actions .danger-outline {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.ticket-dialog::backdrop {
+  /* ::backdrop can't see :root's custom properties or color-scheme, so this
+     stays a fixed dim that works over both themes. */
+  background: rgb(15 23 31 / 0.5);
+}
+
+.ticket-dialog h2 {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bright);
+  padding-bottom: 0.4rem;
+  border-bottom: 3px double var(--edge);
+}
+
+.ticket-dialog label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+.ticket-dialog label.dialog-status-field select {
+  width: auto;
+  min-width: 12rem;
+}
+
+/* Scoped to label-wrapped form fields so this never bleeds into the tag
+   editor's compact input, which styles itself. */
+.ticket-dialog label input,
+.ticket-dialog label textarea,
+.ticket-dialog label select {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: 0;
+  padding: 0.4rem 0.55rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.dialog-actions button {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.4rem 0.8rem;
+}
+
+.dialog-actions .quiet {
+  background: none;
+  border: 1px solid var(--edge);
+  color: var(--muted);
+}
+
+.dialog-actions .primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--on-accent);
+}
+
+.dialog-actions .primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
