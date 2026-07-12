@@ -47,17 +47,18 @@ export default function FeatureItem({
       {...attributes}
       {...listeners}
     >
+      {/* The gutter is always rendered so titles align across rows; the dot
+          only becomes visible while the board has unseen changes. */}
+      <span
+        className={unseen ? 'feature-unseen-dot unseen' : 'feature-unseen-dot'}
+        role={unseen ? 'img' : undefined}
+        title={unseen ? 'Unseen changes' : undefined}
+        aria-label={unseen ? `${feature.name} has unseen changes` : undefined}
+        aria-hidden={unseen ? undefined : true}
+      />
       <button type="button" className="feature-name" onClick={onSelect} title={feature.name}>
         {feature.name}
       </button>
-      {unseen && (
-        <span
-          className="feature-unseen-dot"
-          role="img"
-          title="Unseen changes"
-          aria-label={`${feature.name} has unseen changes`}
-        />
-      )}
       {/* stopPropagation keeps Space/Enter on the buttons from bubbling to
           the row's keyboard-drag listener and starting a drag instead. */}
       <span className="feature-actions" onKeyDown={(event) => event.stopPropagation()}>

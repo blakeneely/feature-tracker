@@ -209,14 +209,20 @@ textarea:focus {
   font-weight: 600;
 }
 
-/* Board changed while another feature was selected — cleared on select. */
+/* Board changed while another feature was selected — cleared on select.
+   Lives in a left gutter that every row reserves (transparent when there's
+   nothing unseen) so titles stay aligned. */
 .feature-unseen-dot {
   flex: none;
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  margin-left: 0.5rem;
+  background: transparent;
+}
+
+.feature-unseen-dot.unseen {
   background: var(--accent);
-  margin-right: 0.4rem;
 }
 
 /* Done features stay in place, just muted and struck through. */
