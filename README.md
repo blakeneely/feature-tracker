@@ -57,8 +57,10 @@ which shuts the server process down (via `POST /api/shutdown`).
   reset when you switch boards.
 - **Theme** cycles Auto → Dark → Light from the sidebar footer. Auto follows
   the system.
-- The UI refetches whenever the window regains focus, so ticket changes made
-  by agents show up without a manual refresh.
+- The board updates live: the server watches the data files and pushes a
+  change event to the browser the moment anything writes them, so tickets
+  created or moved by agents appear as they happen — no refresh, no clicking
+  between features. (Updates arriving mid-drag wait until you drop.)
 
 ## Where the data lives
 

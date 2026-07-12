@@ -8,6 +8,7 @@
 // A legacy single-board data/tickets.json migrates on first read: it moves to
 // data/boards/general.json and the index gets a "General" feature.
 
+import { mkdirSync, watch, type FSWatcher } from 'node:fs';
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
@@ -62,6 +63,34 @@ async function readJson(filePath: string): Promise<unknown | undefined> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
     throw error;
   }
+}
+
+// ---------- change notification ----------
+
+// One fs.watch over data/ shared by every listener (SSE connections), so the
+// UI can refetch the moment anything writes a file — the API or a terminal
+// agent editing boards directly. Recursive to cover data/boards/. The .tmp
+// files from atomic writes are ignored; each one is followed by a rename
+// event on the real file anyway.
+const watchListeners = new Set<() => void>();
+let watcher: FSWatcher | null = null;
+
+export function watchDataDir(listener: () => void): () => void {
+  if (!watcher) {
+    mkdirSync(BOARDS_DIR, { recursive: true }); // fs.watch needs the tree to exist
+    watcher = watch(DATA_DIR, { recursive: true }, (_event, filename) => {
+      if (filename?.endsWith('.tmp')) return;
+      for (const notify of watchListeners) notify();
+    });
+  }
+  watchListeners.add(listener);
+  return () => {
+    watchListeners.delete(listener);
+    if (watchListeners.size === 0 && watcher) {
+      watcher.close();
+      watcher = null;
+    }
+  };
 }
 
 // ---------- features index ----------

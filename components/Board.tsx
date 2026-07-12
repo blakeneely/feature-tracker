@@ -43,7 +43,7 @@ function findColumn(state: BoardState, id: string): ColumnId | undefined {
 }
 
 export default function Board({ featureId, featureName }: BoardProps) {
-  const { state, dispatch, hydrated, error } = useBoardStorage(featureId);
+  const { state, dispatch, hydrated, error, setDragging } = useBoardStorage(featureId);
   const [dialog, setDialog] = useState<DialogState>(null);
   // Filters are view state only — never persisted, never in the board file.
   const [query, setQuery] = useState('');
@@ -131,6 +131,7 @@ export default function Board({ featureId, featureName }: BoardProps) {
 
   // Final position within the destination column.
   const handleDragEnd = (event: DragEndEvent) => {
+    setDragging(false); // resumes live refetches (deferred ones flush now)
     // Swallow the click the browser fires right after the drop (it dispatches
     // before this macrotask timeout runs, so real clicks are unaffected).
     justDragged.current = true;
@@ -180,8 +181,10 @@ export default function Board({ featureId, featureName }: BoardProps) {
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
+        onDragStart={() => setDragging(true)}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => setDragging(false)}
       >
         <main className="board" aria-label="Ticket board">
           {COLUMN_IDS.map((columnId) => (

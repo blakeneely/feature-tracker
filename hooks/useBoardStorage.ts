@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useDataEvents } from '@/hooks/useDataEvents';
 import {
   boardReducer,
   DATA_VERSION,
@@ -15,13 +16,15 @@ interface BoardStorage {
   dispatch: React.Dispatch<BoardAction>;
   hydrated: boolean;
   error: string | null;
+  setDragging: (dragging: boolean) => void; // Board reports drags so live refetches wait
 }
 
 // Owns one feature board's client state and keeps it in sync with GET/PUT
 // /api/features/<id>/tickets: hydrate after mount, write through on every
-// state change, refetch on window focus to pick up edits made by terminal
-// agents. Board remounts per feature (key={featureId}), so each board gets a
-// fresh instance of this state.
+// state change, refetch live on data-change events (and on window focus as a
+// fallback) to pick up edits made by terminal agents. Board remounts per
+// feature (key={featureId}), so each board gets a fresh instance of this
+// state.
 export function useBoardStorage(featureId: string): BoardStorage {
   const [state, dispatch] = useReducer(boardReducer, initialState);
   const [hydrated, setHydrated] = useState(false);
@@ -29,6 +32,12 @@ export function useBoardStorage(featureId: string): BoardStorage {
   // A state change caused by hydrating from the server must not be written
   // straight back — the server already has it.
   const skipNextWrite = useRef(false);
+  // A live refetch landing mid-drag or while our own PUT is in flight would
+  // yank the board out from under the user (or briefly revert their edit), so
+  // those refetches are deferred and flushed when the board is quiet again.
+  const dragging = useRef(false);
+  const pendingWrites = useRef(0);
+  const refetchDeferred = useRef(false);
 
   const refetch = useCallback(async () => {
     try {
@@ -54,6 +63,25 @@ export function useBoardStorage(featureId: string): BoardStorage {
     return () => window.removeEventListener('focus', onFocus);
   }, [refetch]);
 
+  const refetchWhenQuiet = useCallback(() => {
+    if (dragging.current || pendingWrites.current > 0) {
+      refetchDeferred.current = true;
+      return;
+    }
+    refetchDeferred.current = false;
+    void refetch();
+  }, [refetch]);
+
+  useDataEvents(refetchWhenQuiet);
+
+  const setDragging = useCallback(
+    (value: boolean) => {
+      dragging.current = value;
+      if (!value && refetchDeferred.current) refetchWhenQuiet();
+    },
+    [refetchWhenQuiet],
+  );
+
   useEffect(() => {
     if (!hydrated) return;
     if (skipNextWrite.current) {
@@ -63,6 +91,7 @@ export function useBoardStorage(featureId: string): BoardStorage {
     // Whole-board replace: a newer write supersedes an in-flight one, so
     // aborting the stale request is safe.
     const controller = new AbortController();
+    pendingWrites.current += 1;
     fetch(`/api/features/${featureId}/tickets`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -77,9 +106,13 @@ export function useBoardStorage(featureId: string): BoardStorage {
       .catch((caught: unknown) => {
         if (caught instanceof DOMException && caught.name === 'AbortError') return;
         setError(caught instanceof Error ? caught.message : String(caught));
+      })
+      .finally(() => {
+        pendingWrites.current -= 1;
+        if (refetchDeferred.current) refetchWhenQuiet();
       });
     return () => controller.abort();
-  }, [state, hydrated, featureId]);
+  }, [state, hydrated, featureId, refetchWhenQuiet]);
 
-  return { state, dispatch, hydrated, error };
+  return { state, dispatch, hydrated, error, setDragging };
 }

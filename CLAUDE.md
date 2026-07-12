@@ -25,10 +25,12 @@ drives the architecture.
 - **The files are shared with external processes.** Terminal agents may edit
   `data/boards/<id>.json` directly or call the API. Writes must be atomic
   (write temp file, then rename) so a concurrent read never sees a
-  half-written file. The UI refetches on window focus so agent edits show up
-  without a manual refresh. Last write wins — no locking; boards being
-  per-file is what keeps agents on different features from clobbering each
-  other.
+  half-written file. The UI updates live: the server watches `data/`
+  (`fs.watch` in `lib/storage.ts`) and streams change events over
+  `GET /api/events` (SSE); the browser refetches on each event, with a
+  window-focus refetch as fallback. Last write wins — no locking; boards
+  being per-file is what keeps agents on different features from clobbering
+  each other.
 - **Ask before adding npm dependencies.** The approved set is
   Next.js/React/TypeScript plus the agreed drag-and-drop library:
   `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`. Anything beyond
@@ -51,6 +53,9 @@ drives the architecture.
 - `PATCH  /api/features/<id>` `{ name }` — rename (display name only)
 - `DELETE /api/features/<id>` — remove the feature and delete its board file
 - `GET/PUT /api/features/<id>/tickets` — one board, whole-file read/replace
+- `GET  /api/events` — SSE stream; emits `data: change` (debounced) whenever
+  anything under `data/` changes. Drives the UI's live refresh; agents don't
+  need it (they read files/GET on demand)
 - `POST /api/shutdown` — exits the server process (the sidebar Quit button)
 - `GET/PUT /api/tickets` — **gone**; returns 410 with directions (pre-multi-board
   agent prompts may still call it)
@@ -146,8 +151,11 @@ updates are immutable — no in-place array/object mutation.
   for `ConversationRef`s), `ThemeToggle.tsx` (sidebar-footer theme cycler:
   system/dark/light).
 - `hooks/` — camelCase with `use` prefix: `useBoardStorage.ts` (one board:
-  hydrate via GET, write through via PUT, refetch on focus), `useFeatures.ts`
-  (the index: hydrate, refetch on focus, create/rename/delete).
+  hydrate via GET, write through via PUT, live refetch on data events + focus
+  fallback; refetches are deferred while a drag or a PUT is in flight, then
+  flushed), `useFeatures.ts` (the index: hydrate, live refetch + focus
+  fallback, create/rename/delete), `useDataEvents.ts` (one shared EventSource
+  on `/api/events`; subscribers get a callback per data change).
 - `lib/board.ts`, `lib/features.ts` — pure, framework-free domain logic
   (types, reducer, validation). No React, no Node APIs — importable anywhere,
   easily testable.

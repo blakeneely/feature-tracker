@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useDataEvents } from '@/hooks/useDataEvents';
 import {
   isFeaturesFile,
   reorderFeatures as applyReorder,
@@ -27,8 +28,9 @@ async function errorFromResponse(response: Response): Promise<string> {
 }
 
 // Owns the feature list and keeps it in sync with /api/features: hydrate
-// after mount, refetch on window focus (agents can create features too),
-// apply mutations through the API and mirror the response locally.
+// after mount, refetch live on data-change events and on window focus as a
+// fallback (agents can create features too), apply mutations through the API
+// and mirror the response locally.
 export function useFeatures(): FeaturesStorage {
   const [features, setFeatures] = useState<Feature[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,8 @@ export function useFeatures(): FeaturesStorage {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [refetch]);
+
+  useDataEvents(refetch);
 
   const createFeature = useCallback(async (name: string): Promise<Feature | null> => {
     try {
