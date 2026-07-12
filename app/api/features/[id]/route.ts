@@ -1,13 +1,14 @@
 import { deleteBoardFile, mutateFeaturesFile } from '@/lib/storage';
 
-// Rename and delete a feature. The board filename never changes on rename —
-// only the display name in the index does (see CLAUDE.md).
+// Rename, mark done, and delete a feature. The board filename never changes
+// on rename — only the display name in the index does (see CLAUDE.md).
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-// PATCH { name } — rename.
+// PATCH { name?, done? } — rename and/or mark done. At least one field must
+// be present; `updatedAt` bumps on any change.
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   let body: unknown;
@@ -16,13 +17,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   } catch {
     return Response.json({ error: 'Request body must be JSON' }, { status: 400 });
   }
-  const name =
-    typeof body === 'object' && body !== null && typeof (body as { name?: unknown }).name === 'string'
-      ? ((body as { name: string }).name).trim()
-      : '';
-  if (!name) {
+  const patch = typeof body === 'object' && body !== null ? (body as { name?: unknown; done?: unknown }) : {};
+  const hasName = patch.name !== undefined;
+  const hasDone = patch.done !== undefined;
+  if (!hasName && !hasDone) {
+    return Response.json(
+      { error: 'Body must be { name?: string, done?: boolean } with at least one field' },
+      { status: 400 },
+    );
+  }
+  const name = typeof patch.name === 'string' ? patch.name.trim() : '';
+  if (hasName && !name) {
     return Response.json({ error: 'Body must be { name: string } with a non-empty name' }, { status: 400 });
   }
+  if (hasDone && typeof patch.done !== 'boolean') {
+    return Response.json({ error: 'done must be a boolean' }, { status: 400 });
+  }
+  const done = patch.done as boolean | undefined;
 
   try {
     let found = false;
@@ -30,7 +41,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const features = current.features.map((feature) => {
         if (feature.id !== id) return feature;
         found = true;
-        return { ...feature, name, updatedAt: Date.now() };
+        return {
+          ...feature,
+          ...(hasName ? { name } : null),
+          ...(hasDone ? { done } : null),
+          updatedAt: Date.now(),
+        };
       });
       return found ? { ...current, features } : null;
     });
@@ -38,7 +54,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return Response.json(file.features.find((feature) => feature.id === id));
   } catch (error) {
     return Response.json(
-      { error: `Could not rename the feature: ${errorMessage(error)}` },
+      { error: `Could not update the feature: ${errorMessage(error)}` },
       { status: 500 },
     );
   }

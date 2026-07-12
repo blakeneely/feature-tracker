@@ -72,6 +72,8 @@ export function useBoardStorage(featureId: string): BoardStorage {
     void refetch();
   }, [refetch]);
 
+  // Refetch on every data event regardless of which files it names — safety
+  // first; the deferral above already keeps drags and in-flight PUTs smooth.
   useDataEvents(refetchWhenQuiet);
 
   const setDragging = useCallback(

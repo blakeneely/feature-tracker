@@ -24,9 +24,11 @@ interface FeatureSidebarProps {
   features: Feature[];
   loaded: boolean; // false until the first fetch resolves
   selectedId: string | null;
+  unseenIds: ReadonlySet<string>; // boards changed while not selected (view state)
   onSelect: (id: string) => void;
   onCreate: (name: string) => void;
   onRename: (id: string, name: string) => void;
+  onSetDone: (id: string, done: boolean) => void;
   onDelete: (id: string) => void;
   onReorder: (ids: string[]) => void; // full id list in new display order
   onQuit: () => void;
@@ -36,9 +38,11 @@ export default function FeatureSidebar({
   features,
   loaded,
   selectedId,
+  unseenIds,
   onSelect,
   onCreate,
   onRename,
+  onSetDone,
   onDelete,
   onReorder,
   onQuit,
@@ -199,12 +203,14 @@ export default function FeatureSidebar({
                   key={feature.id}
                   feature={feature}
                   selected={feature.id === selectedId}
+                  unseen={unseenIds.has(feature.id)}
                   onSelect={() => onSelect(feature.id)}
                   onStartRename={() => {
                     setCreating(false);
                     setEditDraft(feature.name);
                     setEditingId(feature.id);
                   }}
+                  onToggleDone={() => onSetDone(feature.id, !feature.done)}
                   onDelete={() => confirmDelete(feature)}
                 />
               ),

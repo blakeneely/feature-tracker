@@ -48,8 +48,11 @@ which shuts the server process down (via `POST /api/shutdown`).
 ## Using the board
 
 - **Features** live in the left sidebar: create, rename, delete, and
-  drag to reorder. The magnifier icon filters the list by name. Selecting a
-  feature opens its board.
+  drag to reorder. New features appear at the top of the list. The magnifier
+  icon filters the list by name. Selecting a feature opens its board.
+- **Done features**: the ✓ button on a row marks a feature done — its name
+  goes grey with a strikethrough, but it stays where it is and its board
+  still opens. Click ✓ again to un-done it.
 - **Tickets** are cards in three columns. Drag to move (dragging between
   columns is what changes a ticket's status — status isn't stored anywhere
   else), click a title to open the full view, edit from there.
@@ -60,7 +63,9 @@ which shuts the server process down (via `POST /api/shutdown`).
 - The board updates live: the server watches the data files and pushes a
   change event to the browser the moment anything writes them, so tickets
   created or moved by agents appear as they happen — no refresh, no clicking
-  between features. (Updates arriving mid-drag wait until you drop.)
+  between features. (Updates arriving mid-drag wait until you drop.) When a
+  board other than the one you're viewing changes, its sidebar row gets a
+  small blue dot; selecting the feature clears it.
 
 ## Where the data lives
 

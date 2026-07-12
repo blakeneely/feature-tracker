@@ -13,6 +13,7 @@ interface FeaturesStorage {
   error: string | null;
   createFeature: (name: string) => Promise<Feature | null>;
   renameFeature: (id: string, name: string) => Promise<void>;
+  setFeatureDone: (id: string, done: boolean) => Promise<void>;
   deleteFeature: (id: string) => Promise<void>;
   reorderFeatures: (ids: string[]) => Promise<void>;
 }
@@ -56,6 +57,8 @@ export function useFeatures(): FeaturesStorage {
     return () => window.removeEventListener('focus', onFocus);
   }, [refetch]);
 
+  // Refetch on every data event regardless of which files it names — an
+  // unknown change could always be the index.
   useDataEvents(refetch);
 
   const createFeature = useCallback(async (name: string): Promise<Feature | null> => {
@@ -67,7 +70,9 @@ export function useFeatures(): FeaturesStorage {
       });
       if (!response.ok) throw new Error(await errorFromResponse(response));
       const created = (await response.json()) as Feature;
-      setFeatures((current) => [...(current ?? []), created]);
+      // The server prepends new features — mirror that so the sidebar matches
+      // the file without waiting for the change event.
+      setFeatures((current) => [created, ...(current ?? [])]);
       setError(null);
       return created;
     } catch (caught) {
@@ -87,6 +92,24 @@ export function useFeatures(): FeaturesStorage {
       const renamed = (await response.json()) as Feature;
       setFeatures((current) =>
         (current ?? []).map((feature) => (feature.id === id ? renamed : feature)),
+      );
+      setError(null);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }, []);
+
+  const setFeatureDone = useCallback(async (id: string, done: boolean) => {
+    try {
+      const response = await fetch(`/api/features/${id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ done }),
+      });
+      if (!response.ok) throw new Error(await errorFromResponse(response));
+      const updated = (await response.json()) as Feature;
+      setFeatures((current) =>
+        (current ?? []).map((feature) => (feature.id === id ? updated : feature)),
       );
       setError(null);
     } catch (caught) {
@@ -131,5 +154,5 @@ export function useFeatures(): FeaturesStorage {
     [refetch],
   );
 
-  return { features, error, createFeature, renameFeature, deleteFeature, reorderFeatures };
+  return { features, error, createFeature, renameFeature, setFeatureDone, deleteFeature, reorderFeatures };
 }

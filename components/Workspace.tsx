@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Board from '@/components/Board';
 import FeatureSidebar from '@/components/FeatureSidebar';
+import { useDataEvents } from '@/hooks/useDataEvents';
 import { useFeatures } from '@/hooks/useFeatures';
 
 // Sidebar width is a view preference, not board data — it never enters the
@@ -22,9 +23,19 @@ function clampSidebarWidth(width: number): number {
 // Quit flow; each board owns its own tickets (Board remounts per feature via
 // key).
 export default function Workspace() {
-  const { features, error, createFeature, renameFeature, deleteFeature, reorderFeatures } =
-    useFeatures();
+  const {
+    features,
+    error,
+    createFeature,
+    renameFeature,
+    setFeatureDone,
+    deleteFeature,
+    reorderFeatures,
+  } = useFeatures();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Boards whose file changed while another feature was selected — view state
+  // for the sidebar's "unseen changes" dot, never persisted anywhere.
+  const [unseenIds, setUnseenIds] = useState<ReadonlySet<string>>(() => new Set());
   const [stopped, setStopped] = useState(false); // true once /api/shutdown was sent
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH_DEFAULT);
   const [resizing, setResizing] = useState(false);
@@ -44,6 +55,32 @@ export default function Workspace() {
   // here, or by an agent and picked up on refocus) falls back to the first
   // feature rather than stranding the board.
   const selected = features?.find((feature) => feature.id === selectedId) ?? features?.[0];
+  const selectedFeatureId = selected?.id ?? null;
+
+  // Mark boards that changed while not selected. An empty files array means
+  // "something changed, unknown what" — don't guess, mark nothing.
+  useDataEvents((files) => {
+    const changed = files
+      .map((file) => /^boards\/([a-z0-9-]+)\.json$/.exec(file)?.[1])
+      .filter((id): id is string => id !== undefined && id !== selectedFeatureId);
+    if (changed.length === 0) return;
+    setUnseenIds((current) => {
+      const next = new Set(current);
+      for (const id of changed) next.add(id);
+      return next;
+    });
+  });
+
+  // Selecting a feature (by click or by fallback derivation) clears its dot.
+  useEffect(() => {
+    if (!selectedFeatureId) return;
+    setUnseenIds((current) => {
+      if (!current.has(selectedFeatureId)) return current;
+      const next = new Set(current);
+      next.delete(selectedFeatureId);
+      return next;
+    });
+  }, [selectedFeatureId, unseenIds]);
 
   const handleQuit = async () => {
     const message =
@@ -84,9 +121,11 @@ export default function Workspace() {
         features={features ?? []}
         loaded={features !== null}
         selectedId={selected?.id ?? null}
+        unseenIds={unseenIds}
         onSelect={setSelectedId}
         onCreate={(name) => void handleCreate(name)}
         onRename={(id, name) => void renameFeature(id, name)}
+        onSetDone={(id, done) => void setFeatureDone(id, done)}
         onDelete={(id) => void deleteFeature(id)}
         onReorder={(ids) => void reorderFeatures(ids)}
         onQuit={() => void handleQuit()}

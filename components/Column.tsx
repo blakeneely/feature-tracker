@@ -13,7 +13,6 @@ interface ColumnProps {
   allTags: string[]; // suggestions for the tag editors
   onAdd?: () => void; // only the New column offers creation
   onOpen: (id: string) => void;
-  onDelete: (id: string) => void;
   onAddTag: (id: string, tag: string) => void;
   onRemoveTag: (id: string, tag: string) => void;
 }
@@ -26,7 +25,6 @@ export default function Column({
   allTags,
   onAdd,
   onOpen,
-  onDelete,
   onAddTag,
   onRemoveTag,
 }: ColumnProps) {
@@ -69,7 +67,6 @@ export default function Column({
                   ticket={ticket}
                   allTags={allTags}
                   onOpen={() => onOpen(ticket.id)}
-                  onDelete={() => onDelete(ticket.id)}
                   onAddTag={(tag) => onAddTag(ticket.id, tag)}
                   onRemoveTag={(tag) => onRemoveTag(ticket.id, tag)}
                 />

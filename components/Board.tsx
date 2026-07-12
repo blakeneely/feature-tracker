@@ -197,7 +197,6 @@ export default function Board({ featureId, featureName }: BoardProps) {
               allTags={tags}
               onAdd={columnId === 'new' ? () => setDialog({ mode: 'create' }) : undefined}
               onOpen={openTicket}
-              onDelete={(id) => dispatch({ type: 'delete', id })}
               onAddTag={(id, tag) => dispatch({ type: 'addTag', id, tag, updatedAt: Date.now() })}
               onRemoveTag={(id, tag) =>
                 dispatch({ type: 'removeTag', id, tag, updatedAt: Date.now() })

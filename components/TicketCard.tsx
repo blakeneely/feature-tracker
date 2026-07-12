@@ -9,7 +9,6 @@ interface TicketCardProps {
   ticket: Ticket;
   allTags: string[]; // suggestions for the tag editor
   onOpen: () => void; // opens the large view dialog
-  onDelete: () => void;
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
 }
@@ -20,7 +19,6 @@ export default function TicketCard({
   ticket,
   allTags,
   onOpen,
-  onDelete,
   onAddTag,
   onRemoveTag,
 }: TicketCardProps) {
@@ -57,13 +55,6 @@ export default function TicketCard({
         <time className="ticket-date" dateTime={new Date(ticket.createdAt).toISOString()}>
           Opened {dateFormat.format(ticket.createdAt)}
         </time>
-        {/* stopPropagation keeps Space/Enter on the buttons from bubbling to
-            the card's keyboard-drag listener and starting a drag instead. */}
-        <span className="ticket-actions" onKeyDown={(event) => event.stopPropagation()}>
-          <button type="button" className="danger" onClick={onDelete}>
-            Delete
-          </button>
-        </span>
       </footer>
     </article>
   );

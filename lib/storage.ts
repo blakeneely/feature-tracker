@@ -71,16 +71,18 @@ async function readJson(filePath: string): Promise<unknown | undefined> {
 // UI can refetch the moment anything writes a file — the API or a terminal
 // agent editing boards directly. Recursive to cover data/boards/. The .tmp
 // files from atomic writes are ignored; each one is followed by a rename
-// event on the real file anyway.
-const watchListeners = new Set<() => void>();
+// event on the real file anyway. Listeners get the changed path relative to
+// data/ (as fs.watch reports it, e.g. 'boards\\general.json' on Windows), or
+// null when the platform can't say which file changed.
+const watchListeners = new Set<(filename: string | null) => void>();
 let watcher: FSWatcher | null = null;
 
-export function watchDataDir(listener: () => void): () => void {
+export function watchDataDir(listener: (filename: string | null) => void): () => void {
   if (!watcher) {
     mkdirSync(BOARDS_DIR, { recursive: true }); // fs.watch needs the tree to exist
     watcher = watch(DATA_DIR, { recursive: true }, (_event, filename) => {
       if (filename?.endsWith('.tmp')) return;
-      for (const notify of watchListeners) notify();
+      for (const notify of watchListeners) notify(filename ?? null);
     });
   }
   watchListeners.add(listener);

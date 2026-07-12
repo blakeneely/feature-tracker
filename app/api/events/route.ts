@@ -1,10 +1,13 @@
 import { watchDataDir } from '@/lib/storage';
 
-// Server-Sent Events: one `data: change` message whenever anything under
-// data/ changes, so the browser refetches the instant a terminal agent (or
-// another window) writes a board — no focus change or polling needed. The
-// stream stays open until the client disconnects; EventSource reconnects on
-// its own if the server restarts.
+// Server-Sent Events: one `data: {"files":[...]}` message whenever anything
+// under data/ changes, so the browser refetches the instant a terminal agent
+// (or another window) writes a board — no focus change or polling needed.
+// `files` lists the changed paths relative to data/ (forward slashes, e.g.
+// "boards/general.json"), deduped across the debounce window; it is empty
+// when the watcher couldn't tell which file changed. The stream stays open
+// until the client disconnects; EventSource reconnects on its own if the
+// server restarts.
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +31,15 @@ export function GET(request: Request): Response {
       };
 
       let debounce: ReturnType<typeof setTimeout> | undefined;
-      const unwatch = watchDataDir(() => {
+      const pendingFiles = new Set<string>();
+      const unwatch = watchDataDir((filename) => {
+        if (filename !== null) pendingFiles.add(filename.replace(/\\/g, '/'));
         clearTimeout(debounce);
-        debounce = setTimeout(() => send('data: change\n\n'), DEBOUNCE_MS);
+        debounce = setTimeout(() => {
+          const files = [...pendingFiles];
+          pendingFiles.clear();
+          send(`data: ${JSON.stringify({ files })}\n\n`);
+        }, DEBOUNCE_MS);
       });
       const heartbeat = setInterval(() => send(': keep-alive\n\n'), HEARTBEAT_MS);
       send(': connected\n\n');

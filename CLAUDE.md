@@ -15,9 +15,10 @@ drives the architecture.
   only, never localStorage. Every mutation writes through to a file
   immediately via the API. Layout:
   - `data/features.json` — the feature index: `{ version: 1, features:
-    [{ id, name, createdAt, updatedAt }] }` in display order. Ids are slugs,
-    fixed at creation; **renaming a feature changes only `name` — the board
-    filename never changes.**
+    [{ id, name, createdAt, updatedAt, done? }] }` in display order (new
+    features are prepended; `done?: boolean`, absent = not done). Ids are
+    slugs, fixed at creation; **renaming a feature changes only `name` — the
+    board filename never changes.**
   - `data/boards/<id>.json` — one board file per feature, version-3 board
     shape (below). Version-1/2 files migrate automatically on first read.
   - A legacy single-board `data/tickets.json` migrates on first read: it moves
@@ -47,15 +48,20 @@ drives the architecture.
 ## API surface (`http://localhost:<port>`, default 3000)
 
 - `GET  /api/features` — the feature index (find a board's id by its name here)
-- `POST /api/features` `{ name }` — create a feature + empty board file
+- `POST /api/features` `{ name }` — create a feature + empty board file; the
+  new feature is prepended (top of the sidebar)
 - `PUT  /api/features` `{ ids }` — set display order; ids must be a permutation
   of every current feature id (409 on a stale list)
-- `PATCH  /api/features/<id>` `{ name }` — rename (display name only)
+- `PATCH  /api/features/<id>` `{ name?, done? }` — rename (display name only)
+  and/or mark done; at least one field required
 - `DELETE /api/features/<id>` — remove the feature and delete its board file
 - `GET/PUT /api/features/<id>/tickets` — one board, whole-file read/replace
-- `GET  /api/events` — SSE stream; emits `data: change` (debounced) whenever
-  anything under `data/` changes. Drives the UI's live refresh; agents don't
-  need it (they read files/GET on demand)
+- `GET  /api/events` — SSE stream; emits `data: {"files":[...]}` (debounced)
+  whenever anything under `data/` changes — the changed paths relative to
+  `data/`, forward slashes (e.g. `"boards/general.json"`); `[]` means
+  "something changed, unknown what". Drives the UI's live refresh (refetch +
+  the sidebar's unseen-changes dot); agents don't need it (they read
+  files/GET on demand)
 - `POST /api/shutdown` — exits the server process (the sidebar Quit button)
 - `GET/PUT /api/tickets` — **gone**; returns 410 with directions (pre-multi-board
   agent prompts may still call it)
@@ -124,8 +130,8 @@ interface BoardFile extends BoardState {
 ```
 
 Search/filter state (query, tag dropdown) is view state in `Board` — it is
-never persisted and never enters any data file. Feature selection is view
-state in `Workspace`. localStorage holds view preferences only — the
+never persisted and never enters any data file. Feature selection and the
+sidebar's unseen-changes dots are view state in `Workspace`. localStorage holds view preferences only — the
 sidebar's width (drag its border to resize) and the theme override
 (`feature-tracker:theme`, absent = follow the system); board/ticket data
 still never goes there. Theming is CSS `light-dark()` tokens in
@@ -143,8 +149,9 @@ updates are immutable — no in-place array/object mutation.
 
 - `components/` — one component per file, PascalCase filename matching the
   component: `Workspace.tsx` (shell: sidebar + active board + Quit),
-  `FeatureSidebar.tsx` (feature list, inline create/rename, delete, drag
-  reorder), `FeatureItem.tsx` (one sortable sidebar row),
+  `FeatureSidebar.tsx` (feature list, inline create/rename, done toggle,
+  delete, drag reorder), `FeatureItem.tsx` (one sortable sidebar row;
+  unseen-changes dot, muted/struck-through when done),
   `Board.tsx`, `BoardHeader.tsx` (feature name + filters), `Column.tsx`,
   `TicketCard.tsx`, `TicketDialog.tsx` (view-first detail modal),
   `TagEditor.tsx` (inline pills), `ConversationLink.tsx` (copy-resume chip
@@ -154,8 +161,9 @@ updates are immutable — no in-place array/object mutation.
   hydrate via GET, write through via PUT, live refetch on data events + focus
   fallback; refetches are deferred while a drag or a PUT is in flight, then
   flushed), `useFeatures.ts` (the index: hydrate, live refetch + focus
-  fallback, create/rename/delete), `useDataEvents.ts` (one shared EventSource
-  on `/api/events`; subscribers get a callback per data change).
+  fallback, create/rename/set-done/delete), `useDataEvents.ts` (one shared
+  EventSource on `/api/events`; subscribers get a `(files: string[]) => void`
+  callback per data change — the changed `data/` paths, `[]` when unknown).
 - `lib/board.ts`, `lib/features.ts` — pure, framework-free domain logic
   (types, reducer, validation). No React, no Node APIs — importable anywhere,
   easily testable.

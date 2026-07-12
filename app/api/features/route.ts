@@ -22,6 +22,7 @@ export async function GET() {
 
 // POST { name } — creates the feature and its empty board file, returns the
 // new feature. The id is the name's slug, fixed for the board's lifetime.
+// New features go to the top of the index (top of the sidebar).
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       const taken = new Set(current.features.map((feature) => feature.id));
       const now = Date.now();
       created = { id: nextFeatureId(name, taken), name, createdAt: now, updatedAt: now };
-      return { ...current, features: [...current.features, created] };
+      return { ...current, features: [created, ...current.features] };
     });
     // Seed the board file so agents can start writing tickets immediately.
     const seed: BoardFile = { version: DATA_VERSION, ...initialState };

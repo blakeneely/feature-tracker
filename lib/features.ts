@@ -7,6 +7,7 @@ export interface Feature {
   name: string; // display name, editable
   createdAt: number; // epoch ms
   updatedAt: number; // epoch ms
+  done?: boolean; // marked done in the sidebar; absent = not done
 }
 
 export interface FeaturesFile {
@@ -81,7 +82,8 @@ function isFeature(value: unknown): value is Feature {
     typeof value.name === 'string' &&
     value.name.trim() !== '' &&
     typeof value.createdAt === 'number' &&
-    typeof value.updatedAt === 'number'
+    typeof value.updatedAt === 'number' &&
+    (value.done === undefined || typeof value.done === 'boolean')
   );
 }
 

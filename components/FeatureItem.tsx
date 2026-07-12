@@ -7,19 +7,23 @@ import type { Feature } from '@/lib/features';
 interface FeatureItemProps {
   feature: Feature;
   selected: boolean;
+  unseen: boolean; // board changed while another feature was selected
   onSelect: () => void;
   onStartRename: () => void;
+  onToggleDone: () => void;
   onDelete: () => void;
 }
 
 // One sortable row in the feature sidebar — same drag idiom as TicketCard:
 // the whole row drags, and the sensors' 5px activation distance is what lets
-// the select/rename/delete buttons take plain clicks.
+// the select/rename/done/delete buttons take plain clicks.
 export default function FeatureItem({
   feature,
   selected,
+  unseen,
   onSelect,
   onStartRename,
+  onToggleDone,
   onDelete,
 }: FeatureItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -29,6 +33,7 @@ export default function FeatureItem({
   const className = [
     'feature-item',
     selected && 'feature-active',
+    feature.done && 'feature-done',
     isDragging && 'feature-dragging',
   ]
     .filter(Boolean)
@@ -45,9 +50,26 @@ export default function FeatureItem({
       <button type="button" className="feature-name" onClick={onSelect} title={feature.name}>
         {feature.name}
       </button>
+      {unseen && (
+        <span
+          className="feature-unseen-dot"
+          role="img"
+          title="Unseen changes"
+          aria-label={`${feature.name} has unseen changes`}
+        />
+      )}
       {/* stopPropagation keeps Space/Enter on the buttons from bubbling to
           the row's keyboard-drag listener and starting a drag instead. */}
       <span className="feature-actions" onKeyDown={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          className={feature.done ? 'done-toggle done' : 'done-toggle'}
+          aria-label={feature.done ? `Mark ${feature.name} not done` : `Mark ${feature.name} done`}
+          title={feature.done ? 'Mark not done' : 'Mark done'}
+          onClick={onToggleDone}
+        >
+          ✓
+        </button>
         <button
           type="button"
           aria-label={`Rename ${feature.name}`}
