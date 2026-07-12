@@ -155,8 +155,11 @@ updates are immutable — no in-place array/object mutation.
   `Board.tsx`, `BoardHeader.tsx` (feature name + filters), `Column.tsx`,
   `TicketCard.tsx`, `TicketDialog.tsx` (view-first detail modal),
   `TagEditor.tsx` (inline pills), `ConversationLink.tsx` (copy-resume chip
-  for `ConversationRef`s), `ThemeToggle.tsx` (sidebar-footer theme cycler:
-  system/dark/light).
+  for `ConversationRef`s), `AgentTaskLink.tsx` (the mirror chip — copies a
+  self-contained reference, board id/ticket + absolute board-file path, to
+  paste to a fresh agent so it goes and works that board or ticket;
+  masthead "Hand off" + ticket dialog footer), `ThemeToggle.tsx`
+  (sidebar-footer theme cycler: system/dark/light).
 - `hooks/` — camelCase with `use` prefix: `useBoardStorage.ts` (one board:
   hydrate via GET, write through via PUT, live refetch on data events + focus
   fallback; refetches are deferred while a drag or a PUT is in flight, then

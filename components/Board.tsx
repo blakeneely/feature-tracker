@@ -34,6 +34,7 @@ type DialogState =
 interface BoardProps {
   featureId: string; // which board file backs this instance
   featureName: string; // masthead title
+  boardFilePath: string; // absolute path to this board's file, for agent-link refs
 }
 
 // A drag target is either a column id or a ticket id — resolve to the column.
@@ -42,7 +43,7 @@ function findColumn(state: BoardState, id: string): ColumnId | undefined {
   return COLUMN_IDS.find((columnId) => state.columns[columnId].includes(id));
 }
 
-export default function Board({ featureId, featureName }: BoardProps) {
+export default function Board({ featureId, featureName, boardFilePath }: BoardProps) {
   const { state, dispatch, hydrated, error, setDragging } = useBoardStorage(featureId);
   const [dialog, setDialog] = useState<DialogState>(null);
   // Filters are view state only — never persisted, never in the board file.
@@ -164,7 +165,9 @@ export default function Board({ featureId, featureName }: BoardProps) {
         </p>
       )}
       <BoardHeader
+        featureId={featureId}
         featureName={featureName}
+        boardFilePath={boardFilePath}
         conversation={state.conversation}
         query={query}
         tagFilter={tagFilter}
@@ -212,6 +215,9 @@ export default function Board({ featureId, featureName }: BoardProps) {
           ticket={dialogTicket}
           status={dialogStatus ?? 'new'}
           allTags={tags}
+          featureId={featureId}
+          featureName={featureName}
+          boardFilePath={boardFilePath}
           onSubmit={handleSubmit}
           onAddTag={(tag) => {
             if (dialog.mode !== 'create')
