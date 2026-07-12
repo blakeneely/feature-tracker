@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Board from '@/components/Board';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import FeatureSidebar from '@/components/FeatureSidebar';
 import { useDataEvents } from '@/hooks/useDataEvents';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -42,6 +43,7 @@ export default function Workspace({ boardsDir, pathSep }: WorkspaceProps) {
   // for the sidebar's "unseen changes" dot, never persisted anywhere.
   const [unseenIds, setUnseenIds] = useState<ReadonlySet<string>>(() => new Set());
   const [stopped, setStopped] = useState(false); // true once /api/shutdown was sent
+  const [confirmingQuit, setConfirmingQuit] = useState(false); // quit modal open
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH_DEFAULT);
   const [resizing, setResizing] = useState(false);
 
@@ -88,9 +90,7 @@ export default function Workspace({ boardsDir, pathSep }: WorkspaceProps) {
   }, [selectedFeatureId, unseenIds]);
 
   const handleQuit = async () => {
-    const message =
-      'Stop the board server?\n\nAgents will not be able to reach the API until you start it again from the desktop icon.';
-    if (!window.confirm(message)) return;
+    setConfirmingQuit(false);
     try {
       await fetch('/api/shutdown', { method: 'POST' });
     } catch {
@@ -133,8 +133,21 @@ export default function Workspace({ boardsDir, pathSep }: WorkspaceProps) {
         onSetDone={(id, done) => void setFeatureDone(id, done)}
         onDelete={(id) => void deleteFeature(id)}
         onReorder={(ids) => void reorderFeatures(ids)}
-        onQuit={() => void handleQuit()}
+        onQuit={() => setConfirmingQuit(true)}
       />
+      {confirmingQuit && (
+        <ConfirmDialog
+          title="Stop the board server?"
+          confirmLabel="Stop server"
+          onConfirm={() => void handleQuit()}
+          onCancel={() => setConfirmingQuit(false)}
+        >
+          <p>
+            Agents will not be able to reach the API until you start it again from the desktop
+            icon.
+          </p>
+        </ConfirmDialog>
+      )}
       {/* Straddles the sidebar's border: drag to resize, double-click to
           reset, arrow keys when focused. Pointer capture keeps the drag
           alive when the cursor outruns the 9px strip. */}

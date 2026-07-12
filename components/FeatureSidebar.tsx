@@ -16,6 +16,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import FeatureItem from '@/components/FeatureItem';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { Feature } from '@/lib/features';
@@ -53,6 +54,7 @@ export default function FeatureSidebar({
   const [editDraft, setEditDraft] = useState('');
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<Feature | null>(null);
 
   const query = search.trim().toLowerCase();
   const visibleFeatures = query
@@ -80,9 +82,9 @@ export default function FeatureSidebar({
     setEditingId(null);
   };
 
-  const confirmDelete = (feature: Feature) => {
-    const message = `Delete "${feature.name}" and every ticket on its board?\n\nThis cannot be undone.`;
-    if (window.confirm(message)) onDelete(feature.id);
+  const confirmDelete = () => {
+    if (pendingDelete) onDelete(pendingDelete.id);
+    setPendingDelete(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -211,7 +213,7 @@ export default function FeatureSidebar({
                     setEditingId(feature.id);
                   }}
                   onToggleDone={() => onSetDone(feature.id, !feature.done)}
-                  onDelete={() => confirmDelete(feature)}
+                  onDelete={() => setPendingDelete(feature)}
                 />
               ),
             )}
@@ -233,6 +235,19 @@ export default function FeatureSidebar({
           Quit
         </button>
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={`Delete “${pendingDelete.name}”?`}
+          confirmLabel="Delete feature"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        >
+          <p>Every ticket on its board will be deleted.</p>
+          <p className="confirm-dialog-note">This cannot be undone.</p>
+        </ConfirmDialog>
+      )}
     </aside>
   );
 }

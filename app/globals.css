@@ -1149,6 +1149,40 @@ textarea:focus {
   cursor: not-allowed;
 }
 
+/* ---------- confirm dialog ---------- */
+
+/* window.confirm replacement: same glass surface as the ticket dialog
+   (.ticket-dialog carries the background, blur, and backdrop), just sized
+   for a question instead of a form. */
+.confirm-dialog {
+  width: min(26rem, 94vw);
+}
+
+.confirm-dialog-body {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.confirm-dialog-body p {
+  margin: 0 0 0.6rem;
+}
+
+.confirm-dialog-body p:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-dialog-body .confirm-dialog-note {
+  color: var(--muted);
+}
+
+/* Filled danger confirm — the dialog exists for this one action, so it gets
+   primary weight, in the destructive hue. */
+.dialog-actions .danger {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: var(--on-accent);
+}
+
 /* ---------- reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {

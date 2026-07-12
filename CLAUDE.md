@@ -154,6 +154,8 @@ updates are immutable — no in-place array/object mutation.
   unseen-changes dot, muted/struck-through when done),
   `Board.tsx`, `BoardHeader.tsx` (feature name + filters), `Column.tsx`,
   `TicketCard.tsx`, `TicketDialog.tsx` (view-first detail modal),
+  `ConfirmDialog.tsx` (window.confirm replacement on the ticket-dialog glass
+  surface — quit + feature delete; never window.confirm/alert),
   `TagEditor.tsx` (inline pills), `ConversationLink.tsx` (copy-resume chip
   for `ConversationRef`s), `AgentTaskLink.tsx` (the mirror chip — copies a
   self-contained reference, board id/ticket + absolute board-file path, to
