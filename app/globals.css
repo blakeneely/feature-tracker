@@ -395,13 +395,50 @@ textarea:focus {
   padding: 1.5rem 1rem 0.75rem;
   border-bottom: 4px double var(--edge);
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Nameplate row: title on the left, provenance chips (Origin / Hand off) on
+   the right. Wraps the chips below the title when the row is tight. */
+.masthead-nameplate {
+  display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
+  gap: 0.5rem 1.5rem;
 }
 
-/* The title is the flexible part of the masthead row: it shrinks and
+.masthead-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+/* Folio line: filters sit under a fine rule that echoes the masthead's own
+   double rule at a subordinate weight. The result count trails at the far
+   right, like a folio's page number. */
+.masthead-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+/* Search pins left; this cluster (result count + Tag) pins right, keeping the
+   Tag dropdown on the far edge whether or not the count is showing. */
+.masthead-filters-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+/* The title is the flexible part of the nameplate row: it shrinks and
    ellipsizes so a long feature name can't push the controls onto a second
    line — wrapping is reserved for genuinely narrow windows. */
 .masthead-title {
@@ -433,13 +470,6 @@ textarea:focus {
   border: 1px solid var(--line);
   padding: 0.05rem 0.4rem;
   white-space: nowrap;
-}
-
-.masthead-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem;
 }
 
 .control {
@@ -510,7 +540,11 @@ textarea:focus {
    label stack in one grid cell: the hidden sizer fixes the width to the
    longest label, the visible label sits left-anchored on top — flipping to
    the shorter "copied ✓" never resizes or shifts the button. */
-.conversation-link {
+/* .agent-link is the mirror chip: it copies a reference you paste to a fresh
+   agent to point it AT the work. Same visual language as the conversation
+   chip. */
+.conversation-link,
+.agent-link {
   display: inline-grid;
   align-items: center;
   font-family: var(--font-mono), monospace;
@@ -524,23 +558,37 @@ textarea:focus {
 }
 
 .conversation-link-sizer,
-.conversation-link-label {
+.conversation-link-label,
+.agent-link-sizer,
+.agent-link-label {
   grid-area: 1 / 1;
   text-align: left;
 }
 
-.conversation-link-sizer {
+.conversation-link-sizer,
+.agent-link-sizer {
   visibility: hidden;
 }
 
-.conversation-link:hover {
+.conversation-link:hover,
+.agent-link:hover {
   color: var(--accent-strong);
   border-color: var(--accent);
 }
 
-.conversation-link.copied {
+.conversation-link.copied,
+.agent-link.copied {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+/* The ticket dialog footer can show both chips (conversation + agent link);
+   keep them together on the right, wrapping as a unit if the row is tight. */
+.dialog-view-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* Stops the local server — destructive, so it earns red, but only on hover

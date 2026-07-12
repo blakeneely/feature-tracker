@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import AgentTaskLink from '@/components/AgentTaskLink';
 import ConversationLink from '@/components/ConversationLink';
 import TagEditor from '@/components/TagEditor';
 import {
@@ -18,6 +19,9 @@ interface TicketDialogProps {
   ticket?: Ticket; // present for view/edit, absent for create
   status: ColumnId; // current column (view/edit) or default placement (create)
   allTags: string[]; // suggestions for the tag editor
+  featureId: string; // board id — for the ticket's agent-link reference
+  featureName: string; // board name — for the ticket's agent-link reference
+  boardFilePath: string; // absolute path to this board's file — for the agent-link reference
   onSubmit: (title: string, description: string, status: ColumnId) => void;
   onEdit: () => void; // view → edit
   onCancel: () => void; // edit → back to view; create → close
@@ -40,6 +44,9 @@ export default function TicketDialog({
   ticket,
   status,
   allTags,
+  featureId,
+  featureName,
+  boardFilePath,
   onSubmit,
   onEdit,
   onCancel,
@@ -101,7 +108,15 @@ export default function TicketDialog({
               Opened {fullDate.format(ticket.createdAt)} · Updated{' '}
               {fullDate.format(ticket.updatedAt)}
             </p>
-            {ticket.conversation && <ConversationLink conversation={ticket.conversation} />}
+            <div className="dialog-view-links">
+              {ticket.conversation && <ConversationLink conversation={ticket.conversation} />}
+              <AgentTaskLink
+                featureId={featureId}
+                featureName={featureName}
+                boardFilePath={boardFilePath}
+                ticket={{ number: ticket.number, title: ticket.title }}
+              />
+            </div>
           </div>
           <div className="dialog-actions">
             <button type="button" className="danger-outline" onClick={onDelete}>

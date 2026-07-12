@@ -18,11 +18,16 @@ function clampSidebarWidth(width: number): number {
   return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, width));
 }
 
+interface WorkspaceProps {
+  boardsDir: string; // absolute path to data/boards on this machine
+  pathSep: string; // this machine's path separator (path.sep)
+}
+
 // The app shell: feature sidebar on the left, the selected feature's board in
 // the main panel. Owns feature selection, the sidebar's width, and the server
 // Quit flow; each board owns its own tickets (Board remounts per feature via
 // key).
-export default function Workspace() {
+export default function Workspace({ boardsDir, pathSep }: WorkspaceProps) {
   const {
     features,
     error,
@@ -167,7 +172,12 @@ export default function Workspace() {
           </p>
         )}
         {selected ? (
-          <Board key={selected.id} featureId={selected.id} featureName={selected.name} />
+          <Board
+            key={selected.id}
+            featureId={selected.id}
+            featureName={selected.name}
+            boardFilePath={`${boardsDir}${pathSep}${selected.id}.json`}
+          />
         ) : features === null ? (
           <main className="board-status">Loading features…</main>
         ) : (
