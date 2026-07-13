@@ -1,7 +1,7 @@
 # One-time machine setup for the Feature Tracker. Idempotent — rerun it any
 # time the repo moves or you change the port.
 #
-#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1 [-Port 3000] [-NoShortcut]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1 [-Port 43117] [-NoShortcut]
 #
 # It figures out this machine's values itself (repo path from the script's
 # location, home from $env:USERPROFILE) and:
@@ -11,7 +11,7 @@
 #      stamping {{TRACKER_ROOT}} and {{PORT}} in skills\to-feature\SKILL.md
 #   4. creates a "Feature Tracker" desktop shortcut to launch-board.vbs
 param(
-    [ValidateRange(1, 65535)][int]$Port = 3000,
+    [ValidateRange(1, 65535)][int]$Port = 43117,
     [switch]$NoShortcut
 )
 $ErrorActionPreference = 'Stop'

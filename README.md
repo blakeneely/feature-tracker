@@ -30,7 +30,7 @@ committed.
 **Desktop shortcut (the normal way).** The shortcut targets
 `scripts/launch-board.vbs`, which runs `launch-board.ps1` silently: it starts
 the dev server if it isn't already running (on the port in
-`tracker.config.json`, default 3000), waits for it to respond, then opens the
+`tracker.config.json`, default 43117), waits for it to respond, then opens the
 board in an app-mode window (Chrome if installed, else Edge; falls back to a
 normal tab). Launching twice won't start a second server.
 
@@ -38,7 +38,7 @@ normal tab). Launching twice won't start a second server.
 
 ```
 npm install            # first time only
-npm run dev -- -p 3000 # use your tracker.config.json port; then open http://localhost:<port>
+npm run dev -- -p 43117 # use your tracker.config.json port; then open http://localhost:<port>
 ```
 
 **Quitting.** Closing the browser window does *not* stop the server — it

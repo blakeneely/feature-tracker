@@ -2,10 +2,10 @@
 # running, waits for it to respond, then opens an app-mode browser window
 # (Chrome if installed, else Edge). Invoked by launch-board.vbs so no console
 # window appears. The port comes from tracker.config.json (written by
-# scripts\setup.ps1), falling back to 3000.
+# scripts\setup.ps1), falling back to 43117.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$port = 3000
+$port = 43117
 $configPath = Join-Path $root 'tracker.config.json'
 if (Test-Path $configPath) {
     try {

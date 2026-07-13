@@ -22,7 +22,7 @@ I just cloned the Feature Tracker repo and you're running inside it. Set it
 up for this machine:
 
 1. Read SETUP.md so you know what the setup script does.
-2. Check whether port 3000 is free; pick a free port if it isn't.
+2. Check whether port 43117 is free; pick a free port if it isn't.
 3. Run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1
    (add -Port <n> if you picked a different port).
 4. Verify the install: confirm tracker.config.json exists, confirm
@@ -45,8 +45,8 @@ From the repo root:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1
 ```
 
-Add `-Port 3100` (any free port) if something else on your machine already
-uses 3000. Add `-NoShortcut` to skip the desktop shortcut. The script is
+Add `-Port <n>` (any free port) if something else on your machine already
+uses 43117. Add `-NoShortcut` to skip the desktop shortcut. The script is
 idempotent — rerun it whenever you move the repo or want a different port.
 
 It does four things:

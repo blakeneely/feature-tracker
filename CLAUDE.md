@@ -40,12 +40,12 @@ drives the architecture.
 - **Nothing machine-specific is committed.** `data/`, `tracker.config.json`,
   and `.claude/settings.local.json` are gitignored; the app self-seeds an
   empty `data/` on first run. Machine setup is `scripts/setup.ps1` (see
-  `SETUP.md`) — it writes `tracker.config.json` (`{ port }`, default 3000)
+  `SETUP.md`) — it writes `tracker.config.json` (`{ port }`, default 43117)
   and installs the `/to-feature` skill from the in-repo template. Anything
   new that depends on an absolute path or the port must go through that
   config/stamping flow, never be hardcoded.
 
-## API surface (`http://localhost:<port>`, default 3000)
+## API surface (`http://localhost:<port>`, default 43117)
 
 - `GET  /api/features` — the feature index (find a board's id by its name here)
 - `POST /api/features` `{ name }` — create a feature + empty board file; the
