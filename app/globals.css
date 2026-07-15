@@ -582,6 +582,35 @@ textarea:focus {
   border-color: var(--accent);
 }
 
+/* .artifact-link is the third chip: a published artifact attached to a board
+   (masthead "Artifacts") or ticket (dialog view). Same visual language as the
+   copy chips, but it's a real link — clicking opens the page in a new tab. */
+.artifact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 0 0.5rem;
+  height: 2rem;
+  white-space: nowrap;
+  text-decoration: none;
+  max-width: 18rem;
+}
+
+.artifact-link-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artifact-link:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
 /* The ticket dialog footer can show both chips (conversation + agent link);
    keep them together on the right, wrapping as a unit if the row is tight. */
 .dialog-view-links {

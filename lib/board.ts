@@ -11,6 +11,14 @@ export interface ConversationRef {
   transcriptPath: string; // absolute path to the session's .jsonl transcript
 }
 
+// A published web artifact (e.g. a claude.ai/code artifact page) attached to
+// a board or ticket. Written only by agents (the UI just displays it) as a
+// chip that opens the URL in a new tab.
+export interface ArtifactRef {
+  title: string; // short human label, shown as the chip text
+  url: string; // http(s) URL the chip opens
+}
+
 export interface Ticket {
   id: string; // crypto.randomUUID()
   number: number; // sequential visual id (#0042) — assigned by the reducer, never reused
@@ -20,6 +28,7 @@ export interface Ticket {
   createdAt: number; // epoch ms
   updatedAt: number; // epoch ms
   conversation?: ConversationRef; // the conversation that created this ticket, if not the board's own
+  artifacts?: ArtifactRef[]; // published artifacts about this ticket's work
 }
 
 export interface BoardState {
@@ -27,6 +36,7 @@ export interface BoardState {
   columns: Record<ColumnId, string[]>; // ordered ticket ids; status is derived from membership
   nextNumber: number; // next visual id to assign; agents writing the file must bump it too
   conversation?: ConversationRef; // the conversation that triggered this board's creation
+  artifacts?: ArtifactRef[]; // published artifacts about this board's work
 }
 
 export type BoardAction =
@@ -211,6 +221,21 @@ function isConversationRef(value: unknown): value is ConversationRef {
   );
 }
 
+function isArtifactRef(value: unknown): value is ArtifactRef {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.title === 'string' &&
+    value.title.trim() !== '' &&
+    typeof value.url === 'string' &&
+    /^https?:\/\/\S+$/.test(value.url)
+  );
+}
+
+// undefined = no artifacts (the common case); present = every entry valid.
+function isValidArtifacts(value: unknown): value is ArtifactRef[] | undefined {
+  return value === undefined || (Array.isArray(value) && value.every(isArtifactRef));
+}
+
 function isTicket(value: unknown): value is Ticket {
   if (!isRecord(value)) return false;
   return (
@@ -222,7 +247,8 @@ function isTicket(value: unknown): value is Ticket {
     isValidTags(value.tags) &&
     typeof value.createdAt === 'number' &&
     typeof value.updatedAt === 'number' &&
-    (value.conversation === undefined || isConversationRef(value.conversation))
+    (value.conversation === undefined || isConversationRef(value.conversation)) &&
+    isValidArtifacts(value.artifacts)
   );
 }
 
@@ -254,6 +280,7 @@ export function isBoardFile(value: unknown): value is BoardFile {
   if (!isRecord(value.tickets) || !isRecord(value.columns)) return false;
   if (!Number.isInteger(value.nextNumber) || (value.nextNumber as number) < 1) return false;
   if (value.conversation !== undefined && !isConversationRef(value.conversation)) return false;
+  if (!isValidArtifacts(value.artifacts)) return false;
 
   const tickets = value.tickets as Record<string, unknown>;
   const placed = validPlacement(tickets, value.columns as Record<string, unknown>);

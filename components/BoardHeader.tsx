@@ -1,14 +1,16 @@
 'use client';
 
 import AgentTaskLink from '@/components/AgentTaskLink';
+import ArtifactLink from '@/components/ArtifactLink';
 import ConversationLink from '@/components/ConversationLink';
-import type { ConversationRef } from '@/lib/board';
+import type { ArtifactRef, ConversationRef } from '@/lib/board';
 
 interface BoardHeaderProps {
   featureId: string; // board id — for the agent-link reference
   featureName: string; // this board's title — the app title lives in the sidebar
   boardFilePath: string; // absolute path to this board's file — for the agent-link reference
   conversation?: ConversationRef; // the conversation that triggered this board, if recorded
+  artifacts?: ArtifactRef[]; // published artifacts about this board's work, if recorded
   query: string;
   tagFilter: string; // '' = all tags
   tags: string[]; // distinct tags in use
@@ -24,6 +26,7 @@ export default function BoardHeader({
   featureName,
   boardFilePath,
   conversation,
+  artifacts,
   query,
   tagFilter,
   tags,
@@ -50,6 +53,14 @@ export default function BoardHeader({
             <span className="control">
               <span className="control-label">Origin</span>
               <ConversationLink conversation={conversation} />
+            </span>
+          )}
+          {artifacts && artifacts.length > 0 && (
+            <span className="control">
+              <span className="control-label">{artifacts.length === 1 ? 'Artifact' : 'Artifacts'}</span>
+              {artifacts.map((artifact) => (
+                <ArtifactLink key={artifact.url} artifact={artifact} />
+              ))}
             </span>
           )}
           <span className="control">

@@ -45,6 +45,33 @@ Rules:
 - Always preserve `conversation` fields already in the file when writing a
   board back (read-modify-write the whole board).
 
+## Attaching published artifacts
+
+Boards and tickets also support an optional `artifacts` array. Whenever you
+publish a web artifact about the work — a claude.ai/code artifact page
+(status walkthrough, design doc, diagram, prototype) — attach it so the
+board grows a link chip that opens the page:
+
+```json
+"artifacts": [
+  { "title": "Plan & status walkthrough", "url": "https://claude.ai/code/artifact/<id>" }
+]
+```
+
+Rules:
+
+- `title` is the chip text — short and human ("Auth flow diagram", not the
+  page's full heading). `url` must be http(s).
+- Artifact about the whole feature → append to the **board's** top-level
+  `artifacts`. Artifact about one piece of work → append to that **ticket's**
+  `artifacts`.
+- Append, don't replace — earlier artifacts stay unless they're genuinely
+  superseded. Re-publishing to the same URL needs no board change.
+- Preserve existing `artifacts` fields when writing a board back, same as
+  `conversation`.
+- The UI renders board artifacts in the masthead ("Artifacts") and ticket
+  artifacts in the ticket dialog; clicking opens the page in a new tab.
+
 ## Steps
 
 ### 1. Name the feature
@@ -147,4 +174,5 @@ session id).
 
 Before working a board's tickets, read the transcript at the board's
 `conversation.transcriptPath` (and any ticket-level ones) for full context on
-decisions already made.
+decisions already made. If you publish an artifact while working the board,
+attach it per "Attaching published artifacts" above so the board links to it.

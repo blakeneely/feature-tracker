@@ -43,7 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return Response.json(
       {
         error:
-          'Body must be a well-formed board file: { version: 3, tickets, columns, nextNumber } with every ticket placed in exactly one column, carrying a unique number below nextNumber and a tags array of unique non-empty strings; the board and any ticket may carry an optional conversation { sessionId, cwd, transcriptPath } of non-empty strings (see CLAUDE.md)',
+          'Body must be a well-formed board file: { version: 3, tickets, columns, nextNumber } with every ticket placed in exactly one column, carrying a unique number below nextNumber and a tags array of unique non-empty strings; the board and any ticket may carry an optional conversation { sessionId, cwd, transcriptPath } of non-empty strings and an optional artifacts array of { title, url } with non-empty title and http(s) url (see CLAUDE.md)',
       },
       { status: 400 },
     );

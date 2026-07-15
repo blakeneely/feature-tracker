@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import AgentTaskLink from '@/components/AgentTaskLink';
+import ArtifactLink from '@/components/ArtifactLink';
 import ConversationLink from '@/components/ConversationLink';
 import TagEditor from '@/components/TagEditor';
 import {
@@ -109,6 +110,9 @@ export default function TicketDialog({
               {fullDate.format(ticket.updatedAt)}
             </p>
             <div className="dialog-view-links">
+              {ticket.artifacts?.map((artifact) => (
+                <ArtifactLink key={artifact.url} artifact={artifact} />
+              ))}
               {ticket.conversation && <ConversationLink conversation={ticket.conversation} />}
               <AgentTaskLink
                 featureId={featureId}

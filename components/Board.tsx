@@ -169,6 +169,7 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
         featureName={featureName}
         boardFilePath={boardFilePath}
         conversation={state.conversation}
+        artifacts={state.artifacts}
         query={query}
         tagFilter={tagFilter}
         tags={tags}

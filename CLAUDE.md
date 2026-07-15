@@ -78,6 +78,12 @@ drives the architecture.
    create the board, and a ticket's `conversation` when you add a ticket from
    a *different* conversation than the board's origin (shape below). Preserve
    any `conversation` fields already present when writing a board back.
+5. When you publish a web artifact about the work (e.g. a claude.ai/code
+   artifact page), attach it: append `{ title, url }` to the board's
+   `artifacts` array if it covers the whole feature, or to the relevant
+   ticket's `artifacts` if it's about one ticket. Re-publishing to the same
+   URL needs no board change; replace the entry only if the URL changed.
+   Preserve existing `artifacts` entries when writing a board back.
 
 ## Ticket data shape
 
@@ -94,6 +100,7 @@ interface Ticket {
   updatedAt: number;   // epoch ms
   conversation?: ConversationRef;  // conversation that created this ticket,
                                    // if not the board's own origin
+  artifacts?: ArtifactRef[];       // published artifacts about this ticket's work
 }
 
 // Link back to the Claude Code conversation that created a board or ticket.
@@ -104,6 +111,16 @@ interface ConversationRef {
   sessionId: string;       // Claude Code session UUID
   cwd: string;             // working directory the conversation ran in
   transcriptPath: string;  // absolute path to the session's .jsonl transcript
+}
+
+// A published web artifact (e.g. a claude.ai/code artifact page) attached to
+// a board or ticket. Written only by agents; the UI renders each entry as a
+// link chip (board: masthead "Artifacts"; ticket: dialog view mode only)
+// that opens the URL in a new tab. title must be non-empty; url must be
+// http(s).
+interface ArtifactRef {
+  title: string;           // short human label — the chip text
+  url: string;             // page the chip opens
 }
 ```
 
@@ -122,6 +139,7 @@ interface BoardState {
   columns: Record<ColumnId, string[]>;  // ordered ticket ids per column
   nextNumber: number;                   // next visual id to assign
   conversation?: ConversationRef;       // conversation that triggered the board
+  artifacts?: ArtifactRef[];            // published artifacts about the feature
 }
 
 interface BoardFile extends BoardState {
@@ -160,7 +178,9 @@ updates are immutable — no in-place array/object mutation.
   for `ConversationRef`s), `AgentTaskLink.tsx` (the mirror chip — copies a
   self-contained reference, board id/ticket + absolute board-file path, to
   paste to a fresh agent so it goes and works that board or ticket;
-  masthead "Hand off" + ticket dialog footer), `ThemeToggle.tsx`
+  masthead "Hand off" + ticket dialog footer), `ArtifactLink.tsx` (link chip
+  for `ArtifactRef`s — opens a published artifact page in a new tab;
+  masthead "Artifacts" + ticket dialog footer), `ThemeToggle.tsx`
   (sidebar-footer theme cycler: system/dark/light).
 - `hooks/` — camelCase with `use` prefix: `useBoardStorage.ts` (one board:
   hydrate via GET, write through via PUT, live refetch on data events + focus
