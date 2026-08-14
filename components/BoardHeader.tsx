@@ -11,6 +11,9 @@ interface BoardHeaderProps {
   boardFilePath: string; // absolute path to this board's file — for the agent-link reference
   conversation?: ConversationRef; // the conversation that triggered this board, if recorded
   artifacts?: ArtifactRef[]; // published artifacts about this board's work, if recorded
+  uatEnabled: boolean; // whether this board has the optional UAT column
+  uatCount: number; // tickets currently in UAT — disabling is blocked until 0
+  onToggleUat: (enabled: boolean) => void;
   query: string;
   tagFilter: string; // '' = all tags
   tags: string[]; // distinct tags in use
@@ -27,6 +30,9 @@ export default function BoardHeader({
   boardFilePath,
   conversation,
   artifacts,
+  uatEnabled,
+  uatCount,
+  onToggleUat,
   query,
   tagFilter,
   tags,
@@ -70,6 +76,27 @@ export default function BoardHeader({
               featureName={featureName}
               boardFilePath={boardFilePath}
             />
+          </span>
+          {/* Per-board UAT column toggle. Turning it off is blocked while the
+              column holds tickets — a toggle never changes a ticket's status. */}
+          <span className="control">
+            <span className="control-label">UAT column</span>
+            <button
+              type="button"
+              className={`uat-toggle${uatEnabled ? ' uat-toggle-on' : ''}`}
+              aria-pressed={uatEnabled}
+              disabled={uatEnabled && uatCount > 0}
+              title={
+                uatEnabled && uatCount > 0
+                  ? `Move ${uatCount === 1 ? 'the ticket' : `all ${uatCount} tickets`} out of UAT before turning it off`
+                  : uatEnabled
+                    ? 'Remove the UAT column from this board'
+                    : 'Add a UAT column between Active and Resolved'
+              }
+              onClick={() => onToggleUat(!uatEnabled)}
+            >
+              {uatEnabled ? 'On' : 'Off'}
+            </button>
           </span>
         </div>
       </div>

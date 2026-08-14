@@ -17,7 +17,7 @@ import Column from '@/components/Column';
 import TicketDialog from '@/components/TicketDialog';
 import { useBoardStorage } from '@/hooks/useBoardStorage';
 import {
-  COLUMN_IDS,
+  boardColumnIds,
   distinctTags,
   ticketMatches,
   type BoardState,
@@ -38,9 +38,11 @@ interface BoardProps {
 }
 
 // A drag target is either a column id or a ticket id — resolve to the column.
+// Only this board's present columns count (uat is per-board optional).
 function findColumn(state: BoardState, id: string): ColumnId | undefined {
-  if ((COLUMN_IDS as string[]).includes(id)) return id as ColumnId;
-  return COLUMN_IDS.find((columnId) => state.columns[columnId].includes(id));
+  const present = boardColumnIds(state.columns);
+  if ((present as string[]).includes(id)) return id as ColumnId;
+  return present.find((columnId) => state.columns[columnId]?.includes(id));
 }
 
 export default function Board({ featureId, featureName, boardFilePath }: BoardProps) {
@@ -65,15 +67,19 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
   const matches = (ticket: Ticket) =>
     (tagFilter === '' || ticket.tags.includes(tagFilter)) && ticketMatches(ticket, query);
 
+  // This board's columns in display order — uat only when the board has it.
+  const columnIds = boardColumnIds(state.columns);
+
   // Visible tickets per column. Drag handlers still index into the FULL
   // column arrays by id, so moves stay correct while filters are active.
-  const visible: Record<ColumnId, Ticket[]> = {
-    new: state.columns.new.map((id) => state.tickets[id]).filter(matches),
-    active: state.columns.active.map((id) => state.tickets[id]).filter(matches),
-    resolved: state.columns.resolved.map((id) => state.tickets[id]).filter(matches),
-  };
+  const visible: Partial<Record<ColumnId, Ticket[]>> = {};
+  for (const columnId of columnIds) {
+    visible[columnId] = (state.columns[columnId] ?? [])
+      .map((id) => state.tickets[id])
+      .filter(matches);
+  }
   const totalTickets = Object.keys(state.tickets).length;
-  const shownTickets = visible.new.length + visible.active.length + visible.resolved.length;
+  const shownTickets = columnIds.reduce((sum, columnId) => sum + (visible[columnId]?.length ?? 0), 0);
   const filtering = query.trim() !== '' || tagFilter !== '';
 
   // If the dialog's ticket disappears (deleted, or removed by an agent and
@@ -95,7 +101,12 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
     if (dialog?.mode === 'edit') {
       dispatch({ type: 'update', id: dialog.ticketId, title, description, updatedAt: now });
       if (status !== dialogStatus) {
-        dispatch({ type: 'move', id: dialog.ticketId, to: status, index: state.columns[status].length });
+        dispatch({
+          type: 'move',
+          id: dialog.ticketId,
+          to: status,
+          index: (state.columns[status] ?? []).length,
+        });
       }
       setDialog({ mode: 'view', ticketId: dialog.ticketId }); // back to reading the ticket
     } else {
@@ -105,7 +116,7 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
         ticket: { id, title, description, tags: [], createdAt: now, updatedAt: now },
       });
       if (status !== 'new') {
-        dispatch({ type: 'move', id, to: status, index: state.columns[status].length });
+        dispatch({ type: 'move', id, to: status, index: (state.columns[status] ?? []).length });
       }
       setDialog(null);
     }
@@ -121,12 +132,13 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
     const from = findColumn(state, activeId);
     const to = findColumn(state, overId);
     if (!from || !to || from === to) return;
-    const overIndex = state.columns[to].indexOf(overId);
+    const toIds = state.columns[to] ?? [];
+    const overIndex = toIds.indexOf(overId);
     dispatch({
       type: 'move',
       id: activeId,
       to,
-      index: overIndex >= 0 ? overIndex : state.columns[to].length,
+      index: overIndex >= 0 ? overIndex : toIds.length,
     });
   };
 
@@ -147,7 +159,7 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
     if (activeId === overId) return;
     const to = findColumn(state, overId);
     if (!to) return;
-    const ids = state.columns[to];
+    const ids = state.columns[to] ?? [];
     const newIndex = overId === to ? ids.length : ids.indexOf(overId);
     if (newIndex < 0 || ids.indexOf(activeId) === newIndex) return;
     dispatch({ type: 'move', id: activeId, to, index: newIndex });
@@ -170,6 +182,9 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
         boardFilePath={boardFilePath}
         conversation={state.conversation}
         artifacts={state.artifacts}
+        uatEnabled={state.columns.uat !== undefined}
+        uatCount={state.columns.uat?.length ?? 0}
+        onToggleUat={(enabled) => dispatch({ type: 'setUat', enabled })}
         query={query}
         tagFilter={tagFilter}
         tags={tags}
@@ -190,13 +205,14 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
         onDragEnd={handleDragEnd}
         onDragCancel={() => setDragging(false)}
       >
-        <main className="board" aria-label="Ticket board">
-          {COLUMN_IDS.map((columnId) => (
+        {/* data-columns drives the grid width — 4 tracks when uat is present */}
+        <main className="board" data-columns={columnIds.length} aria-label="Ticket board">
+          {columnIds.map((columnId) => (
             <Column
               key={columnId}
               columnId={columnId}
-              tickets={visible[columnId]}
-              total={state.columns[columnId].length}
+              tickets={visible[columnId] ?? []}
+              total={(state.columns[columnId] ?? []).length}
               filtering={filtering}
               allTags={tags}
               onAdd={columnId === 'new' ? () => setDialog({ mode: 'create' }) : undefined}
@@ -215,6 +231,7 @@ export default function Board({ featureId, featureName, boardFilePath }: BoardPr
           mode={dialog.mode}
           ticket={dialogTicket}
           status={dialogStatus ?? 'new'}
+          statuses={columnIds}
           allTags={tags}
           featureId={featureId}
           featureName={featureName}
