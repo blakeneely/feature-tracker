@@ -119,7 +119,7 @@ If the server is not running (connection refused), edit the files directly in
 2. Append `{ id, name, createdAt, updatedAt }` (epoch ms) to the `features`
    array in `data/features.json`.
 3. Create `data/boards/<id>.json` with
-   `{ "version": 3, "tickets": {}, "columns": { "new": [], "active": [], "resolved": [] }, "nextNumber": 1, "conversation": { ... } }`.
+   `{ "version": 3, "tickets": {}, "columns": { "new": [], "active": [], "uat": [], "resolved": [] }, "nextNumber": 1, "conversation": { ... } }`.
 4. All file writes must be atomic: write to a temp file in the same
    directory, then rename over the target.
 
@@ -135,6 +135,20 @@ Create a ticket per concrete piece of work discussed in the conversation:
 - Status is NOT a ticket field — put the ticket's id in the `new` column
   (or `active` if the work is already underway)
 - No `conversation` on these tickets — the board's origin covers them
+
+#### The optional `uat` column
+
+Columns run New → Active → UAT → Resolved, but `uat` is per-board optional:
+a board has it iff its `columns` object carries a `uat` key. New boards get
+`"uat": []`; older boards may legitimately have only the three columns.
+
+- Keep the column set exactly as the file has it — never add a `uat` key to
+  a 3-column board or drop it from a 4-column one (the user controls that
+  from the UI).
+- When you finish a ticket on a board WITH `uat`: move it to `uat` if the
+  work warrants user-acceptance testing (you may run that testing yourself,
+  e.g. via Playwright, or leave it to the user), or straight to `resolved`
+  if no UAT applies. On a 3-column board, finish to `resolved`.
 
 Write by PUTting the whole board or an atomic file write. Keep titles
 imperative and short; put detail in `description`. Don't invent work that

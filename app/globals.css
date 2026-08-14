@@ -611,6 +611,36 @@ textarea:focus {
   border-color: var(--accent);
 }
 
+/* Masthead toggle for the board's optional UAT column. Same visual language
+   as the chips; the accent border marks it "on". Disabled (with a title
+   explaining why) while UAT still holds tickets. */
+.uat-toggle {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 0 0.5rem;
+  height: 2rem;
+  min-width: 2.75rem;
+  white-space: nowrap;
+}
+
+.uat-toggle-on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.uat-toggle:hover:not(:disabled) {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.uat-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* The ticket dialog footer can show both chips (conversation + agent link);
    keep them together on the right, wrapping as a unit if the row is tight. */
 .dialog-view-links {
@@ -684,8 +714,16 @@ textarea:focus {
   align-items: start;
 }
 
+/* Boards with the optional UAT column get a fourth track. */
+.board[data-columns='4'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 @media (max-width: 760px) {
-  .board {
+  /* Repeat the attribute selector so 4-column boards also collapse (the
+     wide-screen rule above would otherwise win on specificity). */
+  .board,
+  .board[data-columns='4'] {
     grid-template-columns: 1fr;
   }
 }

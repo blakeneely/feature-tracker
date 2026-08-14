@@ -5,13 +5,7 @@ import AgentTaskLink from '@/components/AgentTaskLink';
 import ArtifactLink from '@/components/ArtifactLink';
 import ConversationLink from '@/components/ConversationLink';
 import TagEditor from '@/components/TagEditor';
-import {
-  COLUMN_IDS,
-  COLUMN_LABELS,
-  formatTicketNumber,
-  type ColumnId,
-  type Ticket,
-} from '@/lib/board';
+import { COLUMN_LABELS, formatTicketNumber, type ColumnId, type Ticket } from '@/lib/board';
 
 export type DialogMode = 'view' | 'edit' | 'create';
 
@@ -19,6 +13,7 @@ interface TicketDialogProps {
   mode: DialogMode;
   ticket?: Ticket; // present for view/edit, absent for create
   status: ColumnId; // current column (view/edit) or default placement (create)
+  statuses: ColumnId[]; // this board's columns, in order — uat only if the board has it
   allTags: string[]; // suggestions for the tag editor
   featureId: string; // board id — for the ticket's agent-link reference
   featureName: string; // board name — for the ticket's agent-link reference
@@ -44,6 +39,7 @@ export default function TicketDialog({
   mode,
   ticket,
   status,
+  statuses,
   allTags,
   featureId,
   featureName,
@@ -173,7 +169,7 @@ export default function TicketDialog({
               value={draftStatus}
               onChange={(event) => setDraftStatus(event.target.value as ColumnId)}
             >
-              {COLUMN_IDS.map((columnId) => (
+              {statuses.map((columnId) => (
                 <option key={columnId} value={columnId}>
                   {COLUMN_LABELS[columnId]}
                 </option>

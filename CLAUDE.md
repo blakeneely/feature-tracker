@@ -74,6 +74,14 @@ drives the architecture.
    or `GET`/`PUT /api/features/<id>/tickets`.
 3. When adding a ticket, set `number = nextNumber` and increment `nextNumber`
    — the API rejects boards where a number repeats or reaches `nextNumber`.
+3a. Columns: keep the board's column set exactly as you found it — never add
+   a `uat` key to a 3-column board or drop it from a 4-column one (the user
+   controls that via the UI toggle). New boards you create should include
+   `"uat": []`. When you finish a ticket on a board that HAS a uat column,
+   move it to `uat` if the work warrants user-acceptance testing (you may run
+   that testing yourself, e.g. via Playwright, or leave it to the user) —
+   or straight to `resolved` if no UAT applies. On a 3-column board, finish
+   to `resolved` as before.
 4. Record where the work came from: set the board's `conversation` when you
    create the board, and a ticket's `conversation` when you add a ticket from
    a *different* conversation than the board's origin (shape below). Preserve
@@ -88,7 +96,10 @@ drives the architecture.
 ## Ticket data shape
 
 ```ts
-type ColumnId = 'new' | 'active' | 'resolved';  // union type, never a loose string
+type ColumnId = 'new' | 'active' | 'uat' | 'resolved';  // union type, never a loose string
+// Display order: New → Active → UAT → Resolved. The uat column is per-board
+// OPTIONAL — a board has it iff its columns object carries a `uat` key (see
+// BoardColumns below).
 
 interface Ticket {
   id: string;          // crypto.randomUUID() — never Date.now() or array indexes
@@ -134,9 +145,16 @@ status out of sync with its position.
 ## Board state & file shape
 
 ```ts
+// uat is the optional per-board UAT column: present key (even `[]`) = the
+// board has it; absent = a 3-column board. New boards get it by default;
+// older boards opt in via the masthead "UAT column" toggle. Turning it off
+// is refused while uat holds tickets (empty it first). Version stays 3 for
+// both shapes — the key's presence, not the version, is the signal.
+type BoardColumns = Record<'new' | 'active' | 'resolved', string[]> & { uat?: string[] };
+
 interface BoardState {
   tickets: Record<string, Ticket>;      // lookup by id
-  columns: Record<ColumnId, string[]>;  // ordered ticket ids per column
+  columns: BoardColumns;                // ordered ticket ids per column
   nextNumber: number;                   // next visual id to assign
   conversation?: ConversationRef;       // conversation that triggered the board
   artifacts?: ArtifactRef[];            // published artifacts about the feature
@@ -170,7 +188,8 @@ updates are immutable — no in-place array/object mutation.
   `FeatureSidebar.tsx` (feature list, inline create/rename, done toggle,
   delete, drag reorder), `FeatureItem.tsx` (one sortable sidebar row;
   unseen-changes dot, muted/struck-through when done),
-  `Board.tsx`, `BoardHeader.tsx` (feature name + filters), `Column.tsx`,
+  `Board.tsx`, `BoardHeader.tsx` (feature name + filters + the per-board
+  "UAT column" toggle, disabled while UAT holds tickets), `Column.tsx`,
   `TicketCard.tsx`, `TicketDialog.tsx` (view-first detail modal),
   `ConfirmDialog.tsx` (window.confirm replacement on the ticket-dialog glass
   surface — quit + feature delete; never window.confirm/alert),
